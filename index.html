@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Special Surprise</title>
+
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    text-align:center;
+    overflow:hidden;
+    color:white;
+
+    background:
+        linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+        url("photo.jpg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.page{
+    display:none;
+    padding-top:80px;
+}
+
+#page1 h2,
+#page2 h2,
+#page3 h2{
+    font-size:48px;
+}
+
+#page2 h3{
+    font-size:32px;
+}
+
+#page1 input,
+#page3 input{
+    font-size:24px;
+}
+
+#page1 button,
+#page2 button,
+#page3 button{
+    font-size:24px;
+}
+
+input{
+    padding:10px;
+    border-radius:20px;
+    border:none;
+    margin-top:10px;
+}
+
+button{
+    padding:10px 20px;
+    border:none;
+    border-radius:20px;
+    margin-top:15px;
+    background:#ff4d6d;
+    color:white;
+    cursor:pointer;
+}
+
+.glow{
+    font-size:40px;
+    font-weight:bold;
+    animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow{
+    from{ text-shadow:0 0 10px white; }
+    to{ text-shadow:0 0 25px yellow,0 0 40px orange; }
+}
+
+#cake{
+    width:400px;
+    margin-top:20px;
+}
+
+.candle{
+    width:8px;
+    height:30px;
+    background:repeating-linear-gradient(
+        to bottom,
+        white,
+        white 5px,
+        pink 5px,
+        pink 10px
+    );
+    position:absolute;
+    border-radius:3px;
+}
+
+.flame{
+    width:10px;
+    height:15px;
+    background: radial-gradient(circle, yellow 40%, orange 60%);
+    border-radius:50%;
+    position:absolute;
+    top:-15px;
+    left:-1px;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-300px) translateX(0px) rotate(0deg);
+        opacity:0;
+    }
+    100% {
+        transform: translateY(0px) translateX(var(--randomX)) rotate(360deg);
+        opacity:1;
+    }
+}
+
+.confetti{
+    position:fixed;
+    width:8px;
+    height:8px;
+    top:-10px;
+    animation: confall 3s linear forwards;
+}
+
+@keyframes confall{
+    to{ transform: translateY(100vh); }
+}
+</style>
+</head>
+
+<body>
+
+<div id="page1" class="page" style="display:block">
+<h2>Please enter your name</h2>
+<input id="nameInput">
+<br>
+<button onclick="checkName()">Submit</button>
+</div>
+
+<div id="page2" class="page">
+<h2 class="glow">Hey, My dear Partner ❤️</h2>
+<h3>Are you ready for the surprise?</h3>
+<button onclick="nextPage(3)">Yes</button>
+</div>
+
+<div id="page3" class="page">
+<h2>Enter your age</h2>
+<input id="ageInput">
+<br>
+<button onclick="checkAge()">Submit</button>
+</div>
+
+<div id="page4" class="page">
+<h2 id="birthdayText" class="glow" style="visibility:hidden;">Happy Birthday Athanaee ❤️</h2>
+
+<img id="cake" src="cake.PNG">
+<br>
+
+<button onclick="startMic()">Blow the Candles 🎂</button>
+
+<audio id="birthdaySong" src="birthday.mp3"></audio>
+</div>
+
+<script>
+
+let candles = [];
+let totalCandles = 28;
+let halfBlown = false;
+
+function nextPage(num){
+    document.querySelectorAll(".page").forEach(p=>p.style.display="none");
+    document.getElementById("page"+num).style.display="block";
+}
+
+function checkName(){
+    let name = document.getElementById("nameInput").value;
+    if(name === "Aravindan"){
+        nextPage(2);
+    }else{
+        alert("Oops, Enter it correctly baby 💘");
+    }
+}
+
+function checkAge(){
+    let age = document.getElementById("ageInput").value;
+    if(age == "28"){
+        nextPage(4);
+        setTimeout(createCandles,600);
+    }else{
+        alert("Nice try, This isn't a guessing game darling 😜.Type your actual age.");
+    }
+}
+
+function createCandles(){
+    let cake = document.getElementById("cake");
+    let rect = cake.getBoundingClientRect();
+
+    for(let i=0;i<totalCandles;i++){
+
+        let candle = document.createElement("div");
+        candle.className="candle";
+
+        let randomLeft = rect.left + 40 + Math.random()*(rect.width-80);
+        let randomTop = rect.top + 15 + Math.random()*45;
+
+        candle.style.left = randomLeft + "px";
+        candle.style.top = "-300px";
+
+        let randomShift = (Math.random()*60 - 30) + "px";
+        candle.style.setProperty('--randomX', randomShift);
+
+        candle.style.animation = "fall 2s ease forwards";
+        candle.style.animationDelay = Math.random()*2 + "s";
+
+        setTimeout(()=>{
+            candle.style.animation = "none";
+            candle.style.left = randomLeft + "px";
+            candle.style.top = randomTop + "px";
+        },2500);
+
+        let flame = document.createElement("div");
+        flame.className="flame";
+        candle.appendChild(flame);
+
+        document.body.appendChild(candle);
+        candles.push(candle);
+    }
+}
+
+function startMic(){
+    navigator.mediaDevices.getUserMedia({audio:true})
+    .then(function(stream){
+
+        const audioContext = new AudioContext();
+        const mic = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+
+        mic.connect(analyser);
+
+        const data = new Uint8Array(analyser.frequencyBinCount);
+
+        function detect(){
+            analyser.getByteFrequencyData(data);
+            let volume = data.reduce((a,b)=>a+b)/data.length;
+
+            if(volume>30 && volume<60 && !halfBlown){
+                blowSomeCandles();
+                halfBlown=true;
+            }
+
+            if(volume>=60){
+                blowAllCandles();
+            }
+
+            requestAnimationFrame(detect);
+        }
+
+        detect();
+    });
+}
+
+function blowSomeCandles(){
+    let onCandles = candles.filter(c=>c.querySelector(".flame"));
+    let randomCount = Math.floor(Math.random()*5)+5;
+
+    for(let i=0;i<randomCount && onCandles.length>0;i++){
+        let index = Math.floor(Math.random()*onCandles.length);
+        let candle = onCandles[index];
+        let flame = candle.querySelector(".flame");
+        if(flame) flame.remove();
+        onCandles.splice(index,1);
+    }
+}
+
+function blowAllCandles(){
+    candles.forEach(c=>{
+        let flame = c.querySelector(".flame");
+        if(flame) flame.remove();
+    });
+
+    document.getElementById("birthdayText").style.visibility="visible";
+    document.getElementById("birthdaySong").play();
+}
+
+</script>
+
+</body>
+</html>
